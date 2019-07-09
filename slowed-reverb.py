@@ -1,4 +1,5 @@
 from tkinter import Tk, Label, Button, filedialog, Scale
+from pysndfx import AudioEffectsChain
 from pydub import AudioSegment
 import os
 
@@ -26,11 +27,16 @@ class App:
     def slowed_reverb(self):
         framerate = (100 - self.slowdown.get()) / 100
         audio = AudioSegment.from_file(self.file)
+        filename = os.path.splitext(os.path.basename(self.file))[0]
+        path = f"{filename}.wav"
 
         slowed = audio._spawn(audio.raw_data, overrides={"frame_rate": int(audio.frame_rate * framerate)})
         slowed.set_frame_rate(audio.frame_rate)
-        slowed.export(f"{self.export_path}/{os.path.basename(self.file)}", format="mp3")
+        slowed.export(path, format="wav")
 
+        fx = AudioEffectsChain().reverb(reverberance=25, hf_damping=35, room_scale=100, pre_delay=5)
+        fx(path, f"{self.export_path}/{filename}.wav")
+        os.remove(path)
 
 if __name__ == "__main__":
     init = Tk()
