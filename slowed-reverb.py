@@ -2,12 +2,13 @@ import os
 import tempfile
 from pydub import AudioSegment
 from pysndfx import AudioEffectsChain
-from tkinter import Tk, Label, Button, filedialog, Scale, StringVar, Frame, ttk
+from tkinter import Tk, Label, Button, filedialog, Scale, StringVar, Frame
 
-class App(Frame):
+class App:
     def __init__(self, app):
         self.app = app
         self.app.title("slowed+reverb")
+        self.app.iconbitmap("slowed_reverb.ico")
         self.app.minsize(width=540, height=360)
 
         self.top_frame = Frame(self.app)
