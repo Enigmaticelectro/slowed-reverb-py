@@ -2,44 +2,76 @@ import os
 import tempfile
 from pydub import AudioSegment
 from pysndfx import AudioEffectsChain
-from tkinter import Tk, Label, Button, filedialog, Scale
+from tkinter import Tk, Label, Button, filedialog, Scale, StringVar, Frame, ttk
 
-class App:
+class App(Frame):
     def __init__(self, app):
         self.app = app
-        app.title("slowed+reverb")
+        self.app.title("slowed+reverb")
+        self.app.minsize(width=540, height=360)
 
-        self.file = ""
+        self.top_frame = Frame(self.app)
+        self.top_frame.pack(padx=20, pady=20)
+        self.middle_frame = Frame(self.app)
+        self.middle_frame.pack(padx=20, pady=20)
+        self.bottom_frame = Frame(self.app)
+        self.bottom_frame.pack(padx=20, pady=20)
+
+        self.filepath = ""
+        self.filename = StringVar(value="No file selected")
         self.export_path = "exported_files"
 
-        self.select_file_button = Button(app, text="Select file", command=self.select_file)
-        self.select_file_button.pack()
+        #Top frame
+        self.selected_file = Label(self.top_frame, textvariable=self.filename)
+        self.selected_file.pack(side="left")
 
-        self.select_file_button = Button(app, text="slowed+reverb", command=self.slowed_reverb)
-        self.select_file_button.pack()
+        self.select_file_button = Button(self.top_frame, text="Select file", command=self.select_file)
+        self.select_file_button.pack(side="left")
         
-        self.slowdown = Scale(app, orient="horizontal", from_=0, to=100, label="slow down:")
-        self.slowdown.pack()
+        #Middle frame
+        self.slowdown = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, label="framerate:")
+        self.slowdown.pack(side="left")
+
+        self.reverberance = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, label="reverberance:")
+        self.reverberance.pack(side="left")
+
+        self.hf_damping = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, label="hf damping:")
+        self.hf_damping.pack(side="left")
+
+        self.room_scale = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, label="room scale:")
+        self.room_scale.pack(side="left")
+
+        self.pre_delay = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, label="pre delay:")
+        self.pre_delay.pack(side="left")
+
+        #Bottom frame
+        self.select_file_button = Button(self.bottom_frame, text="slowed+reverb", command=self.slowed_reverb)
+        self.select_file_button.pack()
         
     def select_file(self):
         filepath = filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(("wav files", "*.wav"), ("mp3 files", "*.mp3")))
-        self.file = filepath
+        self.filepath = filepath
+        self.filename.set(os.path.basename(self.filepath))
     
     def slowed_reverb(self):
         framerate = (100 - self.slowdown.get()) / 100
-        audio = AudioSegment.from_file(self.file)
-        filename = os.path.splitext(os.path.basename(self.file))[0]
+        audio = AudioSegment.from_file(self.filepath)
 
         slowed = audio._spawn(audio.raw_data, overrides={"frame_rate": int(audio.frame_rate * framerate)})
         slowed.set_frame_rate(audio.frame_rate)
 
         with tempfile.TemporaryDirectory() as tmpwav:
-            slowed.export(f"{tmpwav}\{filename}.wav", format="wav")
+            slowed.export(f"{tmpwav}\{self.filename.get()}.wav", format="wav")
                 
             os.makedirs(os.path.dirname('exported_files/'), exist_ok=True)
 
-            fx = AudioEffectsChain().reverb(reverberance=25, hf_damping=35, room_scale=100, pre_delay=5)
-            fx(f"{tmpwav}\{filename}.wav", f"{self.export_path}/{filename}.wav")
+            fx = AudioEffectsChain().reverb(
+                reverberance=self.reverberance.get(),
+                hf_damping=self.hf_damping.get(),
+                room_scale=self.room_scale.get(),
+                pre_delay=self.pre_delay.get()
+                )
+            fx(f"{tmpwav}\{self.filename.get()}.wav", f"{self.export_path}/{os.path.splitext(self.filename.get())[0]}.wav")
 
 if __name__ == "__main__":
     init = Tk()
