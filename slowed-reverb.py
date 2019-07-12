@@ -8,10 +8,10 @@ class App:
     def __init__(self, app):
         self.app = app
         self.app.title("slowed+reverb")
-        self.app.iconbitmap("slowed_reverb.ico")
+        self.app.iconbitmap("icon.ico")
         self.app.minsize(width=640, height=500)
         self.app.maxsize(width=640, height=500)
-        self.app.configure(background="#6622b8")
+        #self.app.configure(background="#6622b8")
         
         self.top_frame = Frame(self.app)
         self.top_frame.pack(padx=20, pady=20)
@@ -32,19 +32,22 @@ class App:
         self.select_file_button.pack(side="left")
         
         #Middle frame
-        self.slowdown = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="framerate:")
+        self.slowdown = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="framerate", fg="#6622b8")
         self.slowdown.pack(side="top")
 
-        self.reverberance = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="reverberance:")
+        self.reverberance = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="reverberance", fg="#6622b8")
         self.reverberance.pack(side="top")
 
-        self.hf_damping = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="hf damping:")
+        self.hf_damping = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="hf damping", fg="#6622b8")
         self.hf_damping.pack(side="top")
 
-        self.room_scale = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="room scale:")
+        self.room_scale = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="room scale", fg="#6622b8")
         self.room_scale.pack(side="top")
 
-        self.pre_delay = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="pre delay:")
+        self.stereo_depth = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="stereo depth", fg="#6622b8")
+        self.stereo_depth.pack(side="top")
+
+        self.pre_delay = Scale(self.middle_frame, orient="horizontal", from_=0, to=100, width="10", label="pre delay", fg="#6622b8")
         self.pre_delay.pack(side="top")
 
         #Bottom frame
@@ -52,17 +55,17 @@ class App:
         self.select_file_button.pack(side="bottom")
         
     def select_file(self):
-        filepath = filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(("wav files", "*.wav"), ("mp3 files", "*.mp3")))
+        filepath = filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(("mp3 files", "*.mp3"), ("wav files", "*.wav")))
         self.filepath = filepath
         self.filename.set(os.path.basename(self.filepath))
     
     def slowed_reverb(self):
         framerate = (100 - self.slowdown.get()) / 100
-        audio = AudioSegment.from_file(self.filepath)
-
+        audio = AudioSegment.from_file(self.filepath, format="mp3")
+        
         slowed = audio._spawn(audio.raw_data, overrides={"frame_rate": int(audio.frame_rate * framerate)})
         slowed.set_frame_rate(audio.frame_rate)
-
+        
         with tempfile.TemporaryDirectory() as tmpwav:
             slowed.export(f"{tmpwav}\export.wav", format="wav")
                 
@@ -72,7 +75,10 @@ class App:
                 reverberance=self.reverberance.get(),
                 hf_damping=self.hf_damping.get(),
                 room_scale=self.room_scale.get(),
-                pre_delay=self.pre_delay.get()
+                stereo_depth=self.stereo_depth.get(),
+                pre_delay=self.pre_delay.get(),
+                #wet_gain=0,
+                #wet_only=False
                 )
             export_filename = os.path.splitext(self.filename.get())[0].replace(" ", "_")
             fx(f"{tmpwav}\export.wav", f"{self.export_path}/{export_filename}.wav")
